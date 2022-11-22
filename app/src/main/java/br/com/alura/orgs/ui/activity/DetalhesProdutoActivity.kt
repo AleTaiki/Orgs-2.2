@@ -1,14 +1,23 @@
 package br.com.alura.orgs.ui.activity
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import br.com.alura.orgs.R
+import br.com.alura.orgs.database.AppDataBase
 import br.com.alura.orgs.databinding.ActivityDetalhesProdutoBinding
 import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
 
+private const val TAG = "DestalhesProduto"
+
 class DetalhesProdutoActivity : AppCompatActivity() {
 
+    private lateinit var produto: Produto
     private val binding by lazy {
         ActivityDetalhesProdutoBinding.inflate(layoutInflater)
     }
@@ -19,8 +28,35 @@ class DetalhesProdutoActivity : AppCompatActivity() {
         tentaCarregarProduto()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_detalhes_produto, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (::produto.isInitialized){
+            val db = AppDataBase.instancia(this)
+            val produtoDao = db.produtoDao()
+            when (item.itemId) {
+                R.id.menu_detalhes_remover -> {
+                    produtoDao.remove(produto)
+                    finish()
+                }
+                R.id.menu_detalhes_editar -> {
+                   Intent(this,FormularioProdutoActivity::class.java).apply {
+                       putExtra(CHAVE_PRODUTO,produto)
+                       startActivity(this)
+                   }
+                }
+            }
+        }
+
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun tentaCarregarProduto() {
         intent.getParcelableExtra<Produto>(CHAVE_PRODUTO)?.let { produtoCarregado ->
+            produto = produtoCarregado
             preencheCampos(produtoCarregado)
         } ?: finish()
     }

@@ -3,16 +3,19 @@ package br.com.alura.orgs.ui.activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import br.com.alura.orgs.dao.ProdutosDao
+import androidx.room.Room
+import br.com.alura.orgs.database.AppDataBase
 import br.com.alura.orgs.databinding.ActivityListaProdutosActivityBinding
+import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.recyclerview.adapter.ListaProdutosAdapter
+import java.math.BigDecimal
 
 class ListaProdutosActivity : AppCompatActivity() {
 
-    private val dao = ProdutosDao()
-    private val adapter = ListaProdutosAdapter(context = this, produtos = dao.buscaTodos())
+    private val adapter = ListaProdutosAdapter(context = this)
     private val binding by lazy {
         ActivityListaProdutosActivityBinding.inflate(layoutInflater)
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,12 +23,14 @@ class ListaProdutosActivity : AppCompatActivity() {
         setContentView(binding.root)
         configuraRecyclerView()
         configuraFab()
-
     }
 
     override fun onResume() {
         super.onResume()
-        adapter.atualiza(dao.buscaTodos())
+        val db = AppDataBase.instancia(this)
+        val produtoDao = db.produtoDao()
+
+        adapter.atualiza(produtoDao.buscaTodos())
     }
 
     private fun configuraFab() {
@@ -35,7 +40,7 @@ class ListaProdutosActivity : AppCompatActivity() {
         }
     }
 
-     private fun vaiParaFormularioProduto() {
+    private fun vaiParaFormularioProduto() {
         val intent = Intent(this, FormularioProdutoActivity::class.java)
         startActivity(intent)
     }
