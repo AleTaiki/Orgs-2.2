@@ -13,19 +13,34 @@ import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
 
-private const val TAG = "DestalhesProduto"
-
 class DetalhesProdutoActivity : AppCompatActivity() {
 
-    private lateinit var produto: Produto
+    private var produtoId: Long = 0L
+    private var produto: Produto? = null
     private val binding by lazy {
         ActivityDetalhesProdutoBinding.inflate(layoutInflater)
+    }
+   private val produtoDao by lazy {
+        AppDataBase.instancia(this).produtoDao()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         tentaCarregarProduto()
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        buscaProduto()
+    }
+
+    private fun buscaProduto() {
+        produto = produtoDao.buscaPorId(produtoId)
+        produto?.let {
+            preencheCampos(it)
+        } ?: finish()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -34,31 +49,24 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (::produto.isInitialized){
-            val db = AppDataBase.instancia(this)
-            val produtoDao = db.produtoDao()
             when (item.itemId) {
                 R.id.menu_detalhes_remover -> {
-                    produtoDao.remove(produto)
+                    produto?.let { produtoDao.remove(it) }
                     finish()
                 }
                 R.id.menu_detalhes_editar -> {
-                   Intent(this,FormularioProdutoActivity::class.java).apply {
-                       putExtra(CHAVE_PRODUTO,produto)
-                       startActivity(this)
-                   }
+                    Intent(this, FormularioProdutoActivity::class.java).apply {
+                        putExtra(CHAVE_PRODUTO_ID, produtoId)
+                        startActivity(this)
+                    }
                 }
             }
-        }
 
         return super.onOptionsItemSelected(item)
     }
 
     private fun tentaCarregarProduto() {
-        intent.getParcelableExtra<Produto>(CHAVE_PRODUTO)?.let { produtoCarregado ->
-            produto = produtoCarregado
-            preencheCampos(produtoCarregado)
-        } ?: finish()
+        produtoId = intent.getLongExtra(CHAVE_PRODUTO_ID,0L)
     }
 
     private fun preencheCampos(produtoCarregado: Produto) {
